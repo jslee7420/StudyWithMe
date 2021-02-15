@@ -5,45 +5,107 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <h2>My video</h2>
+    <video autoplay></video>
+    <h2>Other video</h2>
+    <img src="" heigth="240" width="416">
+
+
+    <!-- <textarea id="chat-log" cols="100" rows="20"></textarea><br>
     <input id="chat-message-input" type="text" size="100"><br>
-    <input id="chat-message-submit" type="button" value="Send">
+    <input id="chat-message-submit" type="button" value="Send"> -->
     {{ room_name|json_script:"room-name" }}
     <script>
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        // get video dom element
+        const video = document.querySelector('video');
+        
+        // request access to webcam
+        navigator.mediaDevices.getUserMedia({video: {width: 416, height: 240}}).then((stream) => video.srcObject = stream);
+        
+        // returns a frame encoded in base64
+        const getFrame = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg');
+            return data;
+        }
 
-        const chatSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/ws/chat/'
-            + roomName
-            + '/'
-        );
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        const chatSocket_URL = 'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        const chatSocket = new WebSocket(chatSocket_URL);
+        // const WS_URL = location.origin.replace(/^http/, 'ws');
+        const FPS = 3;
+        // const ws = new WebSocket(WS_URL);
+        chatSocket.onopen = () => {
+            console.log(`Connected to ${chatSocket_URL}`);
+            setInterval(() => {
+                chatSocket.send(JSON.stringify({
+                    'message': getFrame()
+                }));
+            }, 1000 / FPS);
+        }
+
+
+
+        // get img dom element
+        const img = document.querySelector('img');
+        
+        // const WS_URL = location.origin.replace(/^http/, 'ws');
+        // const ws = new WebSocket(WS_URL);
+        // ws.onopen = () => console.log(`Connected to ${WS_URL}`);
+        // ws.onmessage = message => {
+        //     // set the base64 string to the src tag of the image
+        //     img.src = message.data;
+        // }
 
         chatSocket.onmessage = function(e) {
+            
+            // 
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
-        };
+            // set the base64 string to the src tag of the image
+            img.src = data.message;
+        }
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
         };
 
-        document.querySelector('#chat-message-input').focus();
-        document.querySelector('#chat-message-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#chat-message-submit').click();
-            }
-        };
+        // const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
-        document.querySelector('#chat-message-submit').onclick = function(e) {
-            const messageInputDom = document.querySelector('#chat-message-input');
-            const message = messageInputDom.value;
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.value = '';
-        };
+        // const chatSocket = new WebSocket(
+        //     'ws://'
+        //     + window.location.host
+        //     + '/ws/chat/'
+        //     + roomName
+        //     + '/'
+        // );
+
+        // chatSocket.onmessage = function(e) {
+        //     const data = JSON.parse(e.data);
+        //     document.querySelector('#chat-log').value += (data.message + '\n');
+        // };
+
+        // chatSocket.onclose = function(e) {
+        //     console.error('Chat socket closed unexpectedly');
+        // };
+
+        // document.querySelector('#chat-message-input').focus();
+        // document.querySelector('#chat-message-input').onkeyup = function(e) {
+        //     if (e.keyCode === 13) {  // enter, return
+        //         document.querySelector('#chat-message-submit').click();
+        //     }
+        // };
+
+        // document.querySelector('#chat-message-submit').onclick = function(e) {
+        //     const messageInputDom = document.querySelector('#chat-message-input');
+        //     const message = messageInputDom.value;
+        //     chatSocket.send(JSON.stringify({
+        //         'message': message
+        //     }));
+        //     messageInputDom.value = '';
+        // };
     </script>
 </body>
 </html>
