@@ -29,7 +29,7 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             const data = canvas.toDataURL('image/jpeg');
-            return data;
+            return data
         }
 
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
@@ -40,7 +40,11 @@
         // const ws = new WebSocket(WS_URL);
         chatSocket.onopen = () => {
             console.log(`Connected to ${chatSocket_URL}`);
-            setInterval(() => {
+            console.log(getFrame())
+            setInterval(() => { //일정한 시간 간격으로 함수 반복 실행
+                // -----------------------------------------------------------
+                // 추후 클라이언트 쪽에서 비정상 프레임 전송 하지 않도록 변경
+                // -----------------------------------------------------------
                 chatSocket.send(JSON.stringify({
                     'message': getFrame()
                 }));
