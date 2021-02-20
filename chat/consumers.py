@@ -93,6 +93,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         offset = data_url.index(',')+1
         # Decoding base64 string to bytes object
         img_bytes = base64.b64decode(data_url[offset:])
+
         img = Image.open(BytesIO(img_bytes))
         image = np.array(img)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -101,8 +102,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for (x, y, w, h) in faces_detected:
             cv2.rectangle(image, pt1=(x, y), pt2=(x + w, y + h),
                           color=(255, 0, 0), thickness=2)
-        frame_flip = cv2.flip(image, 1)
-        image = cv2.imencode('.jpg', frame_flip)[1].tostring()
+        image = cv2.flip(image, 1)  # 이미지 좌우 반전
+        # cv2 는 BGR로 변환 시킴 따라서 RGB로 다시 변환
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.imencode('.jpg', image)[1]
         # 원래 포멧으로 변경
         img_as_base64 = 'data:image/jpg;base64,' + \
             base64.b64encode(image).decode('UTF-8')
