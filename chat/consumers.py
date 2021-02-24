@@ -25,7 +25,8 @@ face_detection_videocam = cv2.CascadeClassifier(os.path.join(
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    def __init__(self):
+    def init(self):
+
         #####################################################################################################################
         # 1. Variables for checking EAR.
         # 2. Variables for detecting if user is asleep.
@@ -91,6 +92,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
+        self.init()
 
         # Join room group
         await self.channel_layer.group_add(
@@ -171,25 +173,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         img = Image.open(BytesIO(img_bytes))
         image = np.array(img)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # faces_detected = face_detection_videocam.detectMultiScale(
-        #     gray, scaleFactor=1.3, minNeighbors=5)
-        # for (x, y, w, h) in faces_detected:
-        #     cv2.rectangle(image, pt1=(x, y), pt2=(x + w, y + h),
-        #                   color=(255, 0, 0), thickness=2)
-        # image = cv2.flip(image, 1)  # 이미지 좌우 반전
-        # # cv2 는 BGR로 변환 시킴 따라서 RGB로 다시 변환
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # image = cv2.imencode('.jpg', image)[1]
-        # # 원래 포멧으로 변경
-        # img_as_base64 = 'data:image/jpg;base64,' + \
-        #     base64.b64encode(image).decode('UTF-8')
-
-        # return img_as_base64
-
-        #####################################################################################################################
-        # frame = img
-
-        # L, gray = lr.light_removing(frame)
 
         rects = self.detector(gray, 0)
 
@@ -203,8 +186,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             leftEye = shape[self.lStart:self.lEnd]
             rightEye = shape[self.rStart:self.rEnd]
-            leftEAR = eye_aspect_ratio(leftEye)
-            rightEAR = eye_aspect_ratio(rightEye)
+            leftEAR = self.eye_aspect_ratio(leftEye)
+            rightEAR = self.eye_aspect_ratio(rightEye)
 
             # (leftEAR + rightEAR) / 2 => both_ear.
             # I multiplied by 1000 to enlarge the scope.
@@ -212,8 +195,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             leftEyeHull = cv2.convexHull(leftEye)
             rightEyeHull = cv2.convexHull(rightEye)
-            image = cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-            image = cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+            image = cv2.drawContours(image, [leftEyeHull], -1, (0, 255, 0), 1)
+            image = cv2.drawContours(image, [rightEyeHull], -1, (0, 255, 0), 1)
 
             # if both_ear < EAR_THRESH :
             #     if not self.TIMER_FLAG:
@@ -269,12 +252,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             print('hello')
             return img_as_base64
 
-    # def eye_aspect_ratio(self, eye):
-    #     A = dist.euclidean(eye[1], eye[5])
-    #     B = dist.euclidean(eye[2], eye[4])
-    #     C = dist.euclidean(eye[0], eye[3])
-    #     ear = (A + B) / (2.0 * C)
-    #     return ear
+    def eye_aspect_ratio(self, eye):
+        A = dist.euclidean(eye[1], eye[5])
+        B = dist.euclidean(eye[2], eye[4])
+        C = dist.euclidean(eye[0], eye[3])
+        ear = (A + B) / (2.0 * C)
+        return ear
 
     # def init_open_ear(self):
     #     time.sleep(5)
