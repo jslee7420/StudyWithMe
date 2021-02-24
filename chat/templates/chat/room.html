@@ -3,10 +3,15 @@
 <head>
     <meta charset="utf-8"/>
     <title>Chat Room</title>
+    <style>
+        .gray {
+    filter: grayscale();
+    }
+    </style>
 </head>
 <body>
     <h2>My video</h2>
-    <video autoplay></video>
+    <video autoplay class="gray"></video>
     <h2>Other video</h2>
     <img src="" heigth="240" width="416">
 
@@ -27,6 +32,7 @@
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            
             canvas.getContext('2d').drawImage(video, 0, 0);
             const data = canvas.toDataURL('image/jpeg');
             console.log(data);
@@ -37,7 +43,7 @@
         const chatSocket_URL = 'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
         const chatSocket = new WebSocket(chatSocket_URL);
         // const WS_URL = location.origin.replace(/^http/, 'ws');
-        const FPS = 3;
+        const FPS = 6;
         // const ws = new WebSocket(WS_URL);
         chatSocket.onopen = () => {
             console.log(`Connected to ${chatSocket_URL}`);
